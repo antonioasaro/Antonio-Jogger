@@ -48,13 +48,17 @@ static void window_unload(Window *window) {
 
 void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
 static char str[] = "0:00:00";  
+static int loop = 0;
+	
+	if (count == 0) loop = 1;
 	count = count + incr;
-	str[0] = 48 + (count / (60*10*6)) % 10;
-    str[2] = 48 + (count / (60*10)) % 6;
+	str[0] = 48 + (count / 3600) % 10;
+    str[2] = 48 + (count / 600) % 6;
     str[3] = 48 + (count / 60) % 10;
     str[5] = 48 + (count / 10) % 6;
     str[6] = 48 + (count % 10);
-	if ((count > 1) && (((count % (60*10)) == 0) || ((count % (60*11)) == 0))) vibes_long_pulse(); 
+	if (count == ((600*loop)+(60*(loop-1)))) { vibes_long_pulse(); }
+	if (count == ((600*loop)+(60*(loop-0)))) { vibes_long_pulse(); loop++; }
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "app dbg: %d", count);
 
 	text_layer_set_text(text_layer, str);
