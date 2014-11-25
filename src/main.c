@@ -5,10 +5,6 @@ static TextLayer *text_layer;
 static int count = 0;
 static int incr  = 0;
 
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Select");
-}
-
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   incr = 1;
 }
@@ -37,7 +33,7 @@ static void window_load(Window *window) {
 
   text_layer = text_layer_create((GRect) { .origin = { 0, 48 }, .size = { bounds.size.w, 80 } });
   text_layer_set_text(text_layer, "Jogger");
-  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK));
+  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
 }
@@ -47,17 +43,17 @@ static void window_unload(Window *window) {
 }
 
 void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
-static char str[] = "0:00:00";  
+static char str[] = "00:00";  // 0:00:00";  
 static int loop = 0;
 	
 	if (count == 0) loop = 1;
 	count = count + incr;
-	str[0] = 48 + (count / 3600) % 10;
-    str[2] = 48 + (count / 600) % 6;
-    str[3] = 48 + (count / 60) % 10;
-    str[5] = 48 + (count / 10) % 6;
-    str[6] = 48 + (count % 10);
-	if (count == ((600*loop)+(60*(loop-1)))) { vibes_long_pulse(); }
+//	str[0] = 48 + (count / 3600) % 10;
+    str[2-2] = 48 + (count / 600) % 6;
+    str[3-2] = 48 + (count / 60) % 10;
+    str[5-2] = 48 + (count / 10) % 6;
+    str[6-2] = 48 + (count % 10);
+	if (count == ((600*loop)+(60*(loop-1)))) { vibes_short_pulse(); vibes_long_pulse(); }
 	if (count == ((600*loop)+(60*(loop-0)))) { vibes_long_pulse(); loop++; }
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "app dbg: %d", count);
 
