@@ -53,7 +53,7 @@ static int loop = 0;
     str[3-2] = 48 + (count / 60) % 10;
     str[5-2] = 48 + (count / 10) % 6;
     str[6-2] = 48 + (count % 10);
-	if (count == ((600*loop)+(60*(loop-1)))) { vibes_short_pulse(); vibes_long_pulse(); }
+	if (count == ((600*loop)+(60*(loop-1)))) { vibes_long_pulse(); psleep(1000); vibes_long_pulse(); }
 	if (count == ((600*loop)+(60*(loop-0)))) { vibes_long_pulse(); loop++; }
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "app dbg: %d", count);
 
