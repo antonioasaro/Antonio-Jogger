@@ -19,7 +19,7 @@
     "shortName": "Jogger",
     "uuid": "38c93c6e-adcf-4b64-8bf3-9f393f09be14",
     "versionCode": 1,
-    "versionLabel": "1.0",
+    "versionLabel": "1.1",
     "watchapp": {
         "watchface": false
     }

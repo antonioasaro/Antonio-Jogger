@@ -4,17 +4,22 @@ static Window *window;
 static TextLayer *text_layer;
 static int count = 0;
 static int incr  = 0;
+static int show = 0;
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   incr = 1;
+  if (show == 1) { show = 0; } else { show = 1; }
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
   incr = 0;
+  show = 0;
 }
 
 void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
   count = 0;
+  incr = 0;
+  show = 0;
 }
 
 void select_long_click_release_handler(ClickRecognizerRef recognizer, void *context) {
@@ -55,9 +60,9 @@ static int loop = 0;
     str[6-2] = 48 + (count % 10);
 	if (count == ((600*loop)+(60*(loop-1)))) { vibes_long_pulse(); psleep(1000); vibes_long_pulse(); }
 	if (count == ((600*loop)+(60*(loop-0)))) { vibes_long_pulse(); loop++; }
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "app dbg: %d", count);
+////	APP_LOG(APP_LOG_LEVEL_DEBUG, "app dbg: %d", count);
 
-	text_layer_set_text(text_layer, str);
+	if ((show == 1) || ((count % 60) == 0)) text_layer_set_text(text_layer, str);
 }
 
 static void init(void) {
