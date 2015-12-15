@@ -6,6 +6,16 @@ static int count = 0;
 static int incr  = 0;
 static int show = 0;
 
+#ifdef PBL_BW
+#define YOFF 0
+#else
+#ifdef PBL_ROUND
+#define YOFF 18
+#else
+#define YOFF 5
+#endif
+#endif
+
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   incr = 1;
   if (show == 1) { show = 0; } else { show = 1; }
@@ -36,10 +46,15 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  text_layer = text_layer_create((GRect) { .origin = { 0, 48 }, .size = { bounds.size.w, 80 } });
+  text_layer = text_layer_create((GRect) { .origin = { 0, 48+YOFF }, .size = { bounds.size.w, 80 } });
   text_layer_set_text(text_layer, "Jogger");
   text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
+#ifdef PBL_BW	
+  text_layer_set_text_color(text_layer, GColorBlack);
+#else
+  text_layer_set_text_color(text_layer, GColorBlue);
+#endif
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
 }
 
