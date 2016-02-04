@@ -19,22 +19,35 @@ time_t start;
 #endif
 
 static void show_distance() {
-  // Use the step count metric
-  HealthMetric metric = HealthMetricStepCount;
-  time_t end = time(NULL);
-
-  // Check the metric has data available for today
+  static char str[] = "Dist(km): 0000";  
+  time_t end;
+  int meters;
+	
+  end = time(NULL);
+  HealthMetric metric = HealthMetricWalkedDistanceMeters;
   HealthServiceAccessibilityMask mask = health_service_metric_accessible(metric, start, end);
   if (mask == HealthServiceAccessibilityMaskAvailable) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Steps today: %d", (int) health_service_sum_today(metric));
-	text_layer_set_text(dist_layer, "hi");
+	meters = (int) health_service_sum_today(metric);  // meters = 32159;
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Meters since start: %d", meters);
+	if (meters > 10000) {
+      str[10] = 48 + (meters / 10000) % 10;
+      str[11] = 48 + (meters / 1000)  % 10;
+	  str[12] = '.';
+	  str[13] = 48 + (meters / 100)   % 10;
+	} else {
+      str[10] = 48 + (meters / 1000)  % 10;
+      str[11] = '.';
+	  str[12] = 48 + (meters / 100)   % 10;
+	  str[13] =  ' ';
+	}
+	text_layer_set_text(dist_layer, str);
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "Data unavailable!");
   }	
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  incr = 1;
+  if (incr == 0) { incr = 1; if (count == 0) { start = time(NULL); }}
   if (show == 1) { show = 0; } else { show = 1; }
 }
 
@@ -63,7 +76,7 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  text_layer = text_layer_create((GRect) { .origin = { 0, 48+YOFF }, .size = { bounds.size.w, 80 } });
+  text_layer = text_layer_create((GRect) { .origin = { 0, 46+YOFF }, .size = { bounds.size.w, 80 } });
   text_layer_set_text(text_layer, "Jogger");
   text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
@@ -74,8 +87,8 @@ static void window_load(Window *window) {
 #endif
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
 	
-  dist_layer = text_layer_create((GRect) { .origin = { 0, 60+48+YOFF }, .size = { bounds.size.w, 80 } });
-  text_layer_set_text(dist_layer, "Dist: 0.0 km");
+  dist_layer = text_layer_create((GRect) { .origin = { 0, 48+48+YOFF }, .size = { bounds.size.w, 80 } });
+  text_layer_set_text(dist_layer, "Dist(km): 0.0");
   text_layer_set_font(dist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(dist_layer, GTextAlignmentCenter);
   text_layer_set_text_color(dist_layer, GColorDarkGreen);
@@ -93,16 +106,16 @@ static int loop = 0;
 	if (count == 0) loop = 1;
 	count = count + incr;
 //	str[0] = 48 + (count / 3600) % 10;
-    str[2-2] = 48 + (count / 600) % 6;
-    str[3-2] = 48 + (count / 60) % 10;
-    str[5-2] = 48 + (count / 10) % 6;
-    str[6-2] = 48 + (count % 10);
+    str[0] = 48 + (count / 600) % 6;
+    str[1] = 48 + (count / 60) % 10;
+    str[3] = 48 + (count / 10) % 6;
+    str[4] = 48 + (count % 10);
 	if (count == ((600*loop)+(60*(loop-1)))) { vibes_long_pulse(); psleep(1000); vibes_long_pulse(); }
 	if (count == ((600*loop)+(60*(loop-0)))) { vibes_long_pulse(); loop++; }
 
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "app dbg: %d", count);
+//	APP_LOG(APP_LOG_LEVEL_DEBUG, "app dbg: %d", count);
 	if ((show == 1) || ((count % 60) == 0)) text_layer_set_text(text_layer, str);
-	if ((incr == 1) && ((count % 60) == 0)) show_distance();
+	if ((incr == 1) && ((count % 30) == 0)) show_distance();
 }
 
 static void init(void) {
@@ -115,7 +128,6 @@ static void init(void) {
   const bool animated = true;
   window_stack_push(window, animated);
   tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
-  start = time(NULL);
 }
 
 static void deinit(void) {
