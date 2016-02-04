@@ -1,9 +1,10 @@
 {
     "appKeys": {},
     "capabilities": [
-        ""
+        "health"
     ],
     "companyName": "-",
+    "enableMultiJS": false,
     "longName": "Antonio-Jogger",
     "projectType": "native",
     "resources": {
@@ -12,7 +13,7 @@
                 "file": "images/menu_icon.png",
                 "menuIcon": true,
                 "name": "IMAGE_MENU_ICON",
-                "type": "png"
+                "type": "bitmap"
             }
         ]
     },
@@ -24,7 +25,7 @@
         "chalk"
     ],
     "uuid": "38c93c6e-adcf-4b64-8bf3-9f393f09be14",
-    "versionLabel": "1.31",
+    "versionLabel": "1.4",
     "watchapp": {
         "watchface": false
     }

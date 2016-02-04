@@ -2,9 +2,11 @@
 
 static Window *window;
 static TextLayer *text_layer;
+static TextLayer *dist_layer;
 static int count = 0;
 static int incr  = 0;
 static int show = 0;
+time_t start;
 
 #ifdef PBL_BW
 #define YOFF 0
@@ -15,6 +17,21 @@ static int show = 0;
 #define YOFF 5
 #endif
 #endif
+
+static void show_distance() {
+  // Use the step count metric
+  HealthMetric metric = HealthMetricStepCount;
+  time_t end = time(NULL);
+
+  // Check the metric has data available for today
+  HealthServiceAccessibilityMask mask = health_service_metric_accessible(metric, start, end);
+  if (mask == HealthServiceAccessibilityMaskAvailable) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Steps today: %d", (int) health_service_sum_today(metric));
+	text_layer_set_text(dist_layer, "hi");
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Data unavailable!");
+  }	
+}
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   incr = 1;
@@ -56,6 +73,13 @@ static void window_load(Window *window) {
   text_layer_set_text_color(text_layer, GColorBlue);
 #endif
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
+	
+  dist_layer = text_layer_create((GRect) { .origin = { 0, 60+48+YOFF }, .size = { bounds.size.w, 80 } });
+  text_layer_set_text(dist_layer, "Dist: 0.0 km");
+  text_layer_set_font(dist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_text_alignment(dist_layer, GTextAlignmentCenter);
+  text_layer_set_text_color(dist_layer, GColorDarkGreen);
+  layer_add_child(window_layer, text_layer_get_layer(dist_layer));
 }
 
 static void window_unload(Window *window) {
@@ -75,9 +99,10 @@ static int loop = 0;
     str[6-2] = 48 + (count % 10);
 	if (count == ((600*loop)+(60*(loop-1)))) { vibes_long_pulse(); psleep(1000); vibes_long_pulse(); }
 	if (count == ((600*loop)+(60*(loop-0)))) { vibes_long_pulse(); loop++; }
-////	APP_LOG(APP_LOG_LEVEL_DEBUG, "app dbg: %d", count);
 
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "app dbg: %d", count);
 	if ((show == 1) || ((count % 60) == 0)) text_layer_set_text(text_layer, str);
+	if ((incr == 1) && ((count % 60) == 0)) show_distance();
 }
 
 static void init(void) {
@@ -90,7 +115,7 @@ static void init(void) {
   const bool animated = true;
   window_stack_push(window, animated);
   tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
-	
+  start = time(NULL);
 }
 
 static void deinit(void) {
