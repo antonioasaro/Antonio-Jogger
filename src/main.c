@@ -87,9 +87,9 @@ static void window_load(Window *window) {
 #endif
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
 	
-  dist_layer = text_layer_create((GRect) { .origin = { 0, 48+48+YOFF }, .size = { bounds.size.w, 80 } });
+  dist_layer = text_layer_create((GRect) { .origin = { 0, 56+48+YOFF }, .size = { bounds.size.w, 80 } });
   text_layer_set_text(dist_layer, "Dist(km): 0.0");
-  text_layer_set_font(dist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_font(dist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
   text_layer_set_text_alignment(dist_layer, GTextAlignmentCenter);
   text_layer_set_text_color(dist_layer, GColorDarkGreen);
   layer_add_child(window_layer, text_layer_get_layer(dist_layer));
