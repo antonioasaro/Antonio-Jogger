@@ -20,7 +20,6 @@ time_t start;
 
 static void show_distance() {
   static char str[] = "Dist(km): 0000";  
-  static bool first = true;
   static int offset = 0;
   time_t end;
   int meters;
@@ -32,7 +31,7 @@ static void show_distance() {
 	meters = (int) health_service_sum_today(metric) - offset;
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Times: %lld, %lld", (long long) start, (long long) end);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Meters since start: %d", meters);
-	if (first) { first = false;	offset = meters; return; } 
+	if (count == 0) { offset = meters; return; } 
     if (meters > 10000) {
       str[10] = 48 + (meters / 10000) % 10;
       str[11] = 48 + (meters / 1000)  % 10;
