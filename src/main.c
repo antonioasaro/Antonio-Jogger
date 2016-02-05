@@ -20,6 +20,8 @@ time_t start;
 
 static void show_distance() {
   static char str[] = "Dist(km): 0000";  
+  static bool first = true;
+  static int offset = 0;
   time_t end;
   int meters;
 	
@@ -27,10 +29,11 @@ static void show_distance() {
   HealthMetric metric = HealthMetricWalkedDistanceMeters;
   HealthServiceAccessibilityMask mask = health_service_metric_accessible(metric, start, end);
   if (mask & HealthServiceAccessibilityMaskAvailable) {
-	meters = (int) health_service_sum_today(metric);  // meters = 32159;
+	meters = (int) health_service_sum_today(metric) - offset;
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Times: %lld, %lld", (long long) start, (long long) end);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Meters since start: %d", meters);
-	if (meters > 10000) {
+	if (first) { first = false;	offset = meters; return; } 
+    if (meters > 10000) {
       str[10] = 48 + (meters / 10000) % 10;
       str[11] = 48 + (meters / 1000)  % 10;
 	  str[12] = '.';
@@ -48,7 +51,7 @@ static void show_distance() {
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  if (incr == 0) { incr = 1; if (count == 0) { start = time(NULL); }}
+  if (incr == 0) { incr = 1; if (count == 0) { start = time(NULL); show_distance(); }}
   if (show == 1) { show = 0; } else { show = 1; }
 }
 
