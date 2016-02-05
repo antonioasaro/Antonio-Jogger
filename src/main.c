@@ -26,8 +26,9 @@ static void show_distance() {
   end = time(NULL);
   HealthMetric metric = HealthMetricWalkedDistanceMeters;
   HealthServiceAccessibilityMask mask = health_service_metric_accessible(metric, start, end);
-  if (mask == HealthServiceAccessibilityMaskAvailable) {
+  if (mask & HealthServiceAccessibilityMaskAvailable) {
 	meters = (int) health_service_sum_today(metric);  // meters = 32159;
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Times: %lld, %lld", (long long) start, (long long) end);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Meters since start: %d", meters);
 	if (meters > 10000) {
       str[10] = 48 + (meters / 10000) % 10;
