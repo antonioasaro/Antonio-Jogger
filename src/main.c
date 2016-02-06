@@ -9,12 +9,12 @@ static int show = 0;
 time_t start;
 
 #ifdef PBL_BW
-#define YOFF 0
+#define YOFF 24
 #else
 #ifdef PBL_ROUND
-#define YOFF 18
+#define YOFF 12
 #else
-#define YOFF 5
+#define YOFF 8
 #endif
 #endif
 
@@ -24,6 +24,7 @@ static void show_distance() {
   time_t end;
   int meters;
 	
+#ifdef PBL_HEALTH
   end = time(NULL);
   HealthMetric metric = HealthMetricWalkedDistanceMeters;
   HealthServiceAccessibilityMask mask = health_service_metric_accessible(metric, start, end);
@@ -47,6 +48,7 @@ static void show_distance() {
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "Data unavailable!");
   }	
+#endif
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -79,7 +81,7 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  text_layer = text_layer_create((GRect) { .origin = { 0, 44+YOFF }, .size = { bounds.size.w, 80 } });
+  text_layer = text_layer_create((GRect) { .origin = { 0, 32+YOFF }, .size = { bounds.size.w, 80 } });
   text_layer_set_text(text_layer, "Jogger");
   text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
@@ -89,13 +91,15 @@ static void window_load(Window *window) {
   text_layer_set_text_color(text_layer, GColorBlue);
 #endif
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
-	
-  dist_layer = text_layer_create((GRect) { .origin = { 0, 48+48+YOFF }, .size = { bounds.size.w, 80 } });
+
+#ifdef PBL_HEALTH
+  dist_layer = text_layer_create((GRect) { .origin = { 0, 56+32+YOFF }, .size = { bounds.size.w, 80 } });
   text_layer_set_text(dist_layer, "Dist(km): 0.0");
   text_layer_set_font(dist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
   text_layer_set_text_alignment(dist_layer, GTextAlignmentCenter);
   text_layer_set_text_color(dist_layer, GColorDarkCandyAppleRed);
   layer_add_child(window_layer, text_layer_get_layer(dist_layer));
+#endif
 }
 
 static void window_unload(Window *window) {
