@@ -111,7 +111,7 @@ static void window_load(Window *window) {
 #else
   time_layer = text_layer_create(GRect(28, 8, 100, 20));
 #endif
-  text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
   text_layer_set_text_color(time_layer, GColorDarkGreen);	
   text_layer_set_background_color(time_layer, GColorWhite);
