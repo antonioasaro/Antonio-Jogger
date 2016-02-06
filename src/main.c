@@ -1,8 +1,9 @@
 #include <pebble.h>
 
 static Window *window;
-static TextLayer *text_layer;
+static TextLayer *cntr_layer;
 static TextLayer *dist_layer;
+static TextLayer *time_layer;
 static int count = 0;
 static int incr  = 0;
 static int show = 0;
@@ -12,19 +13,19 @@ time_t start;
 #define YOFF 24
 #else
 #ifdef PBL_ROUND
-#define YOFF 12
+#define YOFF 14
 #else
 #define YOFF 8
 #endif
 #endif
 
 static void show_distance() {
+#ifdef PBL_HEALTH	
   static char str[] = "Dist(km): 0000";  
   static int offset = 0;
   time_t end;
   int meters;
 	
-#ifdef PBL_HEALTH
   end = time(NULL);
   HealthMetric metric = HealthMetricWalkedDistanceMeters;
   HealthServiceAccessibilityMask mask = health_service_metric_accessible(metric, start, end);
@@ -50,6 +51,19 @@ static void show_distance() {
   }	
 #endif
 }
+
+void update_time(struct tm *t) {
+static char hourText[] = "00:00pm";
+
+  if(clock_is_24h_style())
+	strftime(hourText, sizeof(hourText), "%H:%M", t);
+  else
+	strftime(hourText, sizeof(hourText), "%I:%M", t);
+	if (hourText[0] == '0') { hourText[0] = ' '; }
+	if (t->tm_hour < 12) strcat(hourText, "am"); else strcat(hourText, "pm");
+	text_layer_set_text(time_layer, hourText);
+}
+
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   if (incr == 0) { incr = 1; if (count == 0) { start = time(NULL); show_distance(); }}
@@ -81,17 +95,29 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  text_layer = text_layer_create((GRect) { .origin = { 0, 32+YOFF }, .size = { bounds.size.w, 80 } });
-  text_layer_set_text(text_layer, "Jogger");
-  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
-  text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
+  cntr_layer = text_layer_create((GRect) { .origin = { 0, 32+YOFF }, .size = { bounds.size.w, 80 } });
+  text_layer_set_text(cntr_layer, "Jogger");
+  text_layer_set_font(cntr_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
+  text_layer_set_text_alignment(cntr_layer, GTextAlignmentCenter);
 #ifdef PBL_BW	
-  text_layer_set_text_color(text_layer, GColorBlack);
+  text_layer_set_text_color(cntr_layer, GColorBlack);
 #else
-  text_layer_set_text_color(text_layer, GColorBlue);
+  text_layer_set_text_color(cntr_layer, GColorBlue);
 #endif
-  layer_add_child(window_layer, text_layer_get_layer(text_layer));
+  layer_add_child(window_layer, text_layer_get_layer(cntr_layer));
 
+#ifdef PBL_ROUND
+  time_layer = text_layer_create(GRect(42, 14, 100, 20));
+#else
+  time_layer = text_layer_create(GRect(28, 8, 100, 20));
+#endif
+  text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
+  text_layer_set_text_color(time_layer, GColorDarkGreen);	
+  text_layer_set_background_color(time_layer, GColorWhite);
+  text_layer_set_text(time_layer, "00:00");
+  layer_add_child(window_layer, text_layer_get_layer(time_layer));	
+	
 #ifdef PBL_HEALTH
   dist_layer = text_layer_create((GRect) { .origin = { 0, 56+32+YOFF }, .size = { bounds.size.w, 80 } });
   text_layer_set_text(dist_layer, "Dist(km): 0.0");
@@ -103,7 +129,9 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
-  text_layer_destroy(text_layer);
+  text_layer_destroy(cntr_layer);
+  text_layer_destroy(dist_layer);
+  text_layer_destroy(time_layer);
 }
 
 void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
@@ -121,8 +149,9 @@ static int loop = 0;
 	if (count == ((600*loop)+(60*(loop-0)))) { vibes_long_pulse(); loop++; }
 
 //	APP_LOG(APP_LOG_LEVEL_DEBUG, "app dbg: %d", count);
-	if ((show == 1) || ((count % 60) == 0)) text_layer_set_text(text_layer, str);
+	if ((show == 1) || ((count % 60) == 0)) text_layer_set_text(cntr_layer, str);
 	if ((incr == 1) && ((count % 30) == 0)) show_distance();
+	update_time(tick_time);
 }
 
 static void init(void) {
