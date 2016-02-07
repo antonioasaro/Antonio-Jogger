@@ -23,10 +23,22 @@ float scale;
 #endif
 
 static float str_to_float(char *str) {
-  for (int i=0; i < (int) strlen(str); i++) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "str_to_float");
+  float result= 0.0f;
+  size_t dotpos = 0;
+
+  size_t len = strlen(str);
+  for (size_t n = 0; n < len; n++)  {
+    if (str[n] == '.')    {
+      dotpos = len - n - 1;
+    } else {
+      result = result * 10.0f + (str[n] - '0');
+    }
   }
-  return 1.0f;
+  while ( dotpos--) {
+    result /= 10.0f;
+  }
+  APP_LOG(APP_LOG_LEVEL_INFO, "str_to_float - %s, %d", str, (int) (result * 100));
+  return result;
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
