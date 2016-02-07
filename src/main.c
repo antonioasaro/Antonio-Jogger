@@ -9,15 +9,39 @@ static int incr  = 0;
 static int show = 0;
 time_t start;
 
+#define SCALE 1
+float scale;
+
 #ifdef PBL_BW
-#define YOFF 24
+#define YOFF 28
 #else
 #ifdef PBL_ROUND
-#define YOFF 14
+#define YOFF 18
 #else
-#define YOFF 8
+#define YOFF 12
 #endif
 #endif
+
+static float str_to_float(char *str) {
+  for (int i=0; i < (int) strlen(str); i++) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "str_to_float");
+  }
+  return 1.0f;
+}
+
+static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
+  Tuple *scale_factor = dict_find(iterator, SCALE);
+  if (scale_factor) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Decode & persist scale_factor - %s", scale_factor->value->cstring);
+    persist_write_string(SCALE, scale_factor->value->cstring);
+	scale = str_to_float(scale_factor->value->cstring);
+  }
+}
+
+static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
+}
 
 static void show_distance() {
 #ifdef PBL_HEALTH	
@@ -34,6 +58,7 @@ static void show_distance() {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Times: %lld, %lld", (long long) start, (long long) end);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Meters since start: %d", meters);
 	if (count == 0) { offset = meters; return; } 
+	meters = meters * scale;
     if (meters > 10000) {
       str[10] = 48 + (meters / 10000) % 10;
       str[11] = 48 + (meters / 1000)  % 10;
@@ -107,11 +132,11 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(cntr_layer));
 
 #ifdef PBL_ROUND
-  time_layer = text_layer_create(GRect(42, 14, 100, 20));
+  time_layer = text_layer_create(GRect(42, 14, 100, 28));
 #else
-  time_layer = text_layer_create(GRect(28, 8, 100, 20));
+  time_layer = text_layer_create(GRect(28, 8, 100, 28));
 #endif
-  text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
   text_layer_set_text_color(time_layer, GColorDarkGreen);	
   text_layer_set_background_color(time_layer, GColorWhite);
@@ -164,6 +189,18 @@ static void init(void) {
   const bool animated = true;
   window_stack_push(window, animated);
   tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
+	
+  app_message_open(128, 64);
+  app_message_register_inbox_received(inbox_received_callback);
+  app_message_register_inbox_dropped(inbox_dropped_callback);
+	
+  scale = 1.0f;
+  if (persist_exists(SCALE)) {
+    char scale_factor[32];
+    persist_read_string(SCALE, scale_factor, sizeof(scale_factor));
+ 	APP_LOG(APP_LOG_LEVEL_INFO, "Read persistent scale_factor - %s", scale_factor);
+	scale = str_to_float(scale_factor);
+  }
 }
 
 static void deinit(void) {

@@ -1,6 +1,9 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "SCALE": 1
+    },
     "capabilities": [
+        "configurable",
         "health"
     ],
     "companyName": "-",
