@@ -3,6 +3,7 @@
 static Window *window;
 static TextLayer *cntr_layer;
 static TextLayer *dist_layer;
+static TextLayer *scal_layer;
 static TextLayer *time_layer;
 static int count = 0;
 static int incr  = 0;
@@ -13,12 +14,12 @@ time_t start;
 float scale;
 
 #ifdef PBL_BW
-#define YOFF 28
+#define YOFF 26
 #else
 #ifdef PBL_ROUND
-#define YOFF 18
+#define YOFF 16
 #else
-#define YOFF 12
+#define YOFF 10
 #endif
 #endif
 
@@ -48,6 +49,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     APP_LOG(APP_LOG_LEVEL_INFO, "Decode & persist scale_factor - %s", scale_factor->value->cstring);
     persist_write_string(SCALE, scale_factor->value->cstring);
 	scale = str_to_float(scale_factor->value->cstring);
+	text_layer_set_text(scal_layer, strcat("x ", scale_factor->value->cstring));
   }
 }
 
@@ -156,12 +158,19 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(time_layer));	
 	
 #ifdef PBL_HEALTH
-  dist_layer = text_layer_create((GRect) { .origin = { 0, 56+32+YOFF }, .size = { bounds.size.w, 80 } });
+  dist_layer = text_layer_create((GRect) { .origin = { 0, 54+32+YOFF }, .size = { bounds.size.w, 80 } });
   text_layer_set_text(dist_layer, "Dist(km): 0.0");
   text_layer_set_font(dist_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
   text_layer_set_text_alignment(dist_layer, GTextAlignmentCenter);
   text_layer_set_text_color(dist_layer, GColorDarkCandyAppleRed);
   layer_add_child(window_layer, text_layer_get_layer(dist_layer));
+	
+  scal_layer = text_layer_create((GRect) { .origin = { 0, 32+56+32+YOFF }, .size = { bounds.size.w, 80 } });
+  text_layer_set_text(scal_layer, "x 1.00");
+  text_layer_set_font(scal_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_text_alignment(scal_layer, GTextAlignmentCenter);
+  text_layer_set_text_color(scal_layer, GColorIndigo);
+  layer_add_child(window_layer, text_layer_get_layer(scal_layer));
 #endif
 }
 
@@ -206,12 +215,13 @@ static void init(void) {
   app_message_register_inbox_received(inbox_received_callback);
   app_message_register_inbox_dropped(inbox_dropped_callback);
 	
-  scale = 1.0f;
+  scale = 1.00f;
   if (persist_exists(SCALE)) {
     char scale_factor[32];
     persist_read_string(SCALE, scale_factor, sizeof(scale_factor));
  	APP_LOG(APP_LOG_LEVEL_INFO, "Read persistent scale_factor - %s", scale_factor);
 	scale = str_to_float(scale_factor);
+    text_layer_set_text(scal_layer, strcat ("x ", scale_factor));
   }
 }
 
