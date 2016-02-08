@@ -43,13 +43,15 @@ static float str_to_float(char *str) {
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+  static char scale_disp[32];
   APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
   Tuple *scale_factor = dict_find(iterator, SCALE);
   if (scale_factor) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Decode & persist scale_factor - %s", scale_factor->value->cstring);
     persist_write_string(SCALE, scale_factor->value->cstring);
 	scale = str_to_float(scale_factor->value->cstring);
-	text_layer_set_text(scal_layer, strcat("x ", scale_factor->value->cstring));
+	strcpy(scale_disp, "x "); strcat(scale_disp, scale_factor->value->cstring);
+	text_layer_set_text(scal_layer, scale_disp);
   }
 }
 
@@ -217,11 +219,13 @@ static void init(void) {
 	
   scale = 1.00f;
   if (persist_exists(SCALE)) {
-    char scale_factor[32];
+	char scale_factor[16];
+	static char scale_disp[32];
     persist_read_string(SCALE, scale_factor, sizeof(scale_factor));
  	APP_LOG(APP_LOG_LEVEL_INFO, "Read persistent scale_factor - %s", scale_factor);
 	scale = str_to_float(scale_factor);
-    text_layer_set_text(scal_layer, strcat ("x ", scale_factor));
+	strcpy(scale_disp, "x "); strcat(scale_disp, scale_factor);
+    text_layer_set_text(scal_layer, scale_disp);
   }
 }
 
