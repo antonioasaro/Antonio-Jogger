@@ -98,6 +98,16 @@ static void update_distance() {
 #endif
 }
 
+void update_count() {
+	static char cntr_text[] = "00:00";  
+	
+	cntr_text[0] = 48 + (count / 600) % 6;
+    cntr_text[1] = 48 + (count / 60) % 10;
+    cntr_text[3] = 48 + (count / 10) % 6;
+    cntr_text[4] = 48 + (count % 10);
+	text_layer_set_text(cntr_layer, cntr_text); 
+}
+
 void update_time(struct tm *t) {
 	static char hour_text[] = "00:00pm";
 
@@ -112,7 +122,6 @@ void update_time(struct tm *t) {
 }
 
 void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
-	static char cntr_text[] = "00:00";  // 0:00:00";  
 	static int loop = 0;
 	
 	if (count == 0) loop = 1;
@@ -122,13 +131,7 @@ void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 	if (incr == 1) {
 		if ((count % 30) == 0) update_distance(); 
-		if (((count % 60) == 0) || (show == 1)) { 
-    		cntr_text[0] = 48 + (count / 600) % 6;
-    		cntr_text[1] = 48 + (count / 60) % 10;
-    		cntr_text[3] = 48 + (count / 10) % 6;
-    		cntr_text[4] = 48 + (count % 10);
-			text_layer_set_text(cntr_layer, cntr_text); 
-		}
+		if (((count % 60) == 0) || (show == 1)) update_count();
 	}
 	update_time(tick_time);
 }
@@ -139,8 +142,10 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  	incr = 0;
+	incr = 0;
   	show = 0;
+	update_count();
+	update_distance();
 }
 
 void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
