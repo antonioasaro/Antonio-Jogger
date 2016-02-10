@@ -6,7 +6,7 @@
         "configurable",
         "health"
     ],
-    "companyName": "Asarotools",
+    "companyName": "-",
     "enableMultiJS": false,
     "longName": "Antonio-Jogger",
     "projectType": "native",
@@ -28,7 +28,7 @@
         "chalk"
     ],
     "uuid": "38c93c6e-adcf-4b64-8bf3-9f393f09be14",
-    "versionLabel": "1.61",
+    "versionLabel": "1.62",
     "watchapp": {
         "watchface": false
     }
