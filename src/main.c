@@ -75,7 +75,6 @@ static void update_distance() {
     	APP_LOG(APP_LOG_LEVEL_DEBUG, "Times: %lld, %lld", (long long) start, (long long) end);
     	APP_LOG(APP_LOG_LEVEL_DEBUG, "Meters since start: %d", meters);
 		if (count == 0) { 
-			start = time(NULL);
 	  		offset = meters; 
     	} else { 
 	  		meters = (meters - offset) * scale;
@@ -138,7 +137,7 @@ void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   	if (show == 1) show = 0; else show = 1;
-	if (incr == 0) { incr = 1; if (count == 0) update_distance(); }
+	if (incr == 0) { incr = 1; if (count == 0) { start = time(NULL); update_distance(); }}
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
