@@ -18,9 +18,9 @@ float scale;
 #define YOFF 26
 #else
 #ifdef PBL_ROUND
-#define YOFF 16
+#define YOFF 14
 #else
-#define YOFF 10
+#define YOFF 9
 #endif
 #endif
 
@@ -58,6 +58,7 @@ static void update_distance() {
     	APP_LOG(APP_LOG_LEVEL_DEBUG, "Meters since start: %d", meters);
 		if (count == 0) { 
 	  		offset = meters; 
+			text_layer_set_text(dist_layer, "Dist(km): 0.0");
     	} else { 
 	  		meters = (meters - offset) * scale;
       		if (meters > 10000) {
@@ -80,6 +81,7 @@ static void update_distance() {
 }
 
 static void update_scale() {
+#ifdef PBL_HEALTH
 	static char scale_text[32];
 
 	if (persist_exists(SCALE)) {
@@ -89,20 +91,44 @@ static void update_scale() {
  		APP_LOG(APP_LOG_LEVEL_INFO, "Read persistent scale_factor - %s", scale_factor);
 		scale = str_to_float(scale_factor);
 		strcpy(scale_text, "x "); strcat(scale_text, scale_factor);
+		text_layer_set_text_color(scal_layer, GColorIndigo);
     	text_layer_set_text(scal_layer, scale_text);
   	} else {
+		text_layer_set_text_color(scal_layer, GColorIndigo);
     	text_layer_set_text(scal_layer, "x 1.00");
 	}
+#endif
 }
 
 void update_pace() {
-	static char pace_text[32];
+#ifdef PBL_HEALTH
+	static char pace_text[32] = "00:00 (p)";
 	static int prev_meters = 0;
-	int total_meters;	
+	static int prev_count = 0;
+	int curr_meters, delta_meters;
+	int curr_count, delta_count;
+	int pace;
 	
-//	total_meters = meters - prev_meters;
-	strcpy(pace_text, "abc");
-	text_layer_set_text(scal_layer, pace_text);
+	curr_meters = meters;
+	curr_count = count;
+	delta_meters = curr_meters - prev_meters;
+	delta_count = curr_count - prev_count;
+	if (delta_meters > 1000) {
+		if (delta_count > 0) {
+			pace = (delta_count * 10) / ((delta_meters * 10) / 1000);
+			APP_LOG(APP_LOG_LEVEL_INFO, "Current pace - %d", pace);
+			pace_text[0] = ' ';
+			if (pace > 600) pace_text[0] = 48 + (pace / 600) % 6; 
+    		pace_text[1] = 48 + (pace / 60) % 10;
+    		pace_text[3] = 48 + (pace / 10) % 6;
+    		pace_text[4] = 48 + (pace % 10);
+			prev_meters = curr_meters;
+			prev_count = curr_count;
+			text_layer_set_text_color(scal_layer, GColorBlack);
+			text_layer_set_text(scal_layer, pace_text);
+		}
+	}	
+#endif
 }
 
 void update_count() {
@@ -137,8 +163,7 @@ void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
 	if (count == ((600*loop)+(60*(loop-0)))) { vibes_long_pulse(); loop++; }
 
 	if (incr == 1) {
-		if ((count % 30) == 0) update_pace(); 
-		if ((count % 30) == 0) update_distance(); 
+		if ((count % 30) == 0) { update_distance(); update_pace(); }
 		if (((count % 60) == 0) || (show == 1)) update_count(); 
 	}
 	update_time(tick_time);
@@ -160,9 +185,11 @@ void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
   	count = 0;
   	incr = 0;
   	show = 0;
-	text_layer_set_text(cntr_layer, "00:00");
-	text_layer_set_text(dist_layer, "Dist(km): 0.0");
+	update_count();
+#ifdef PBL_HEALTH
+	update_distance();
 	update_scale();
+#endif
 }
 
 void select_long_click_release_handler(ClickRecognizerRef recognizer, void *context) {
