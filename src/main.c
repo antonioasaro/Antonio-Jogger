@@ -8,6 +8,7 @@ static TextLayer *time_layer;
 static int count = 0;
 static int incr  = 0;
 static int show = 0;
+static int meters = 0;
 time_t start;
 
 #define SCALE 1
@@ -42,30 +43,11 @@ static float str_to_float(char *str) {
   	return result;
 }
 
-static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
-  	static char scale_text[32];
-	
-  	APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
-  	Tuple *scale_factor = dict_find(iterator, SCALE);
-  	if (scale_factor) {
-    	APP_LOG(APP_LOG_LEVEL_INFO, "Decode & persist scale_factor - %s", scale_factor->value->cstring);
-    	persist_write_string(SCALE, scale_factor->value->cstring);
-		scale = str_to_float(scale_factor->value->cstring);
-		strcpy(scale_text, "x "); strcat(scale_text, scale_factor->value->cstring);
-		text_layer_set_text(scal_layer, scale_text);
-  	}
-}
-
-static void inbox_dropped_callback(AppMessageResult reason, void *context) {
-  	APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
-}
-
 static void update_distance() {
 #ifdef PBL_HEALTH	
   	static char dist_text[] = "Dist(km): 0000";  
   	static int offset = 0;
   	time_t end;
-  	int meters;
 	
   	end = time(NULL);
   	HealthMetric metric = HealthMetricWalkedDistanceMeters;
@@ -95,6 +77,32 @@ static void update_distance() {
     	APP_LOG(APP_LOG_LEVEL_ERROR, "Data unavailable!");
   	}	
 #endif
+}
+
+static void update_scale() {
+	static char scale_text[32];
+
+	if (persist_exists(SCALE)) {
+		char scale_factor[16];
+		
+    	persist_read_string(SCALE, scale_factor, sizeof(scale_factor));
+ 		APP_LOG(APP_LOG_LEVEL_INFO, "Read persistent scale_factor - %s", scale_factor);
+		scale = str_to_float(scale_factor);
+		strcpy(scale_text, "x "); strcat(scale_text, scale_factor);
+    	text_layer_set_text(scal_layer, scale_text);
+  	} else {
+    	text_layer_set_text(scal_layer, "x 1.00");
+	}
+}
+
+void update_pace() {
+	static char pace_text[32];
+	static int prev_meters = 0;
+	int total_meters;	
+	
+//	total_meters = meters - prev_meters;
+	strcpy(pace_text, "abc");
+	text_layer_set_text(scal_layer, pace_text);
 }
 
 void update_count() {
@@ -129,8 +137,9 @@ void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
 	if (count == ((600*loop)+(60*(loop-0)))) { vibes_long_pulse(); loop++; }
 
 	if (incr == 1) {
+		if ((count % 30) == 0) update_pace(); 
 		if ((count % 30) == 0) update_distance(); 
-		if (((count % 60) == 0) || (show == 1)) update_count();
+		if (((count % 60) == 0) || (show == 1)) update_count(); 
 	}
 	update_time(tick_time);
 }
@@ -153,6 +162,7 @@ void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
   	show = 0;
 	text_layer_set_text(cntr_layer, "00:00");
 	text_layer_set_text(dist_layer, "Dist(km): 0.0");
+	update_scale();
 }
 
 void select_long_click_release_handler(ClickRecognizerRef recognizer, void *context) {
@@ -163,6 +173,21 @@ static void click_config_provider(void *context) {
   	window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
   	window_long_click_subscribe(BUTTON_ID_SELECT, 1000, select_long_click_handler, select_long_click_release_handler);
 
+}
+
+static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+	
+  	APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
+  	Tuple *scale_factor = dict_find(iterator, SCALE);
+  	if (scale_factor) {
+    	APP_LOG(APP_LOG_LEVEL_INFO, "Decode & write persist scale_factor - %s", scale_factor->value->cstring);
+    	persist_write_string(SCALE, scale_factor->value->cstring);
+		update_scale();
+  	}
+}
+
+static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+  	APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
 }
 
 static void window_load(Window *window) {
@@ -230,17 +255,9 @@ static void init(void) {
   	app_message_open(128, 64);
   	app_message_register_inbox_received(inbox_received_callback);
   	app_message_register_inbox_dropped(inbox_dropped_callback);
-	
-  	scale = 1.00f;
-  	if (persist_exists(SCALE)) {
-		char scale_factor[16];
-		static char scale_disp[32];
-    	persist_read_string(SCALE, scale_factor, sizeof(scale_factor));
- 		APP_LOG(APP_LOG_LEVEL_INFO, "Read persistent scale_factor - %s", scale_factor);
-		scale = str_to_float(scale_factor);
-		strcpy(scale_disp, "x "); strcat(scale_disp, scale_factor);
-    	text_layer_set_text(scal_layer, scale_disp);
-  	}
+
+	scale = 1.00f;
+	update_scale();
 }
 
 static void deinit(void) {
