@@ -115,7 +115,7 @@ void update_pace() {
 	delta_count = curr_count - prev_count;
 	if (delta_meters > 1000) {
 		if (delta_count > 0) {
-			pace = (delta_count * 10) / ((delta_meters * 10) / 1000);
+			pace = (delta_count * 1000) / ((delta_meters * 1000) / 1000);
 			APP_LOG(APP_LOG_LEVEL_INFO, "Current pace - %d", pace);
 			pace_text[0] = ' ';
 			if (pace > 600) pace_text[0] = 48 + (pace / 600) % 6; 
@@ -124,6 +124,7 @@ void update_pace() {
     		pace_text[4] = 48 + (pace % 10);
 			prev_meters = curr_meters;
 			prev_count = curr_count;
+			APP_LOG(APP_LOG_LEVEL_INFO, "Prev - %d, %d", prev_meters, prev_count);
 			text_layer_set_text_color(scal_layer, GColorBlack);
 			text_layer_set_text(scal_layer, pace_text);
 		}
