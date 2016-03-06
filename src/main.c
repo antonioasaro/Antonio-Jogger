@@ -49,18 +49,19 @@ static void update_distance() {
   	static int offset = 0;
   	time_t end;
 	
+	APP_LOG(APP_LOG_LEVEL_INFO, "Update distance()");
   	end = time(NULL);
   	HealthMetric metric = HealthMetricWalkedDistanceMeters;
   	HealthServiceAccessibilityMask mask = health_service_metric_accessible(metric, start, end);
   	if (mask & HealthServiceAccessibilityMaskAvailable) {
 		meters = (int) health_service_sum_today(metric);
     	APP_LOG(APP_LOG_LEVEL_DEBUG, "Times: %lld, %lld", (long long) start, (long long) end);
-    	APP_LOG(APP_LOG_LEVEL_DEBUG, "Meters since start: %d", meters);
 		if (count == 0) { 
 	  		offset = meters; 
 			text_layer_set_text(dist_layer, "Dist(km): 0.0");
     	} else { 
-	  		meters = (meters - offset) * scale;
+	  		meters = (meters - offset) * scale;		 		
+	    	APP_LOG(APP_LOG_LEVEL_DEBUG, "Meters since start: %d", meters);
       		if (meters > 10000) {
         		dist_text[10] = 48 + (meters / 10000) % 10;
         		dist_text[11] = 48 + (meters / 1000)  % 10;
@@ -80,26 +81,6 @@ static void update_distance() {
 #endif
 }
 
-static void update_scale() {
-#ifdef PBL_HEALTH
-	static char scale_text[32];
-
-	if (persist_exists(SCALE)) {
-		char scale_factor[16];
-		
-    	persist_read_string(SCALE, scale_factor, sizeof(scale_factor));
- 		APP_LOG(APP_LOG_LEVEL_INFO, "Read persistent scale_factor - %s", scale_factor);
-		scale = str_to_float(scale_factor);
-		strcpy(scale_text, "x "); strcat(scale_text, scale_factor);
-		text_layer_set_text_color(scal_layer, GColorIndigo);
-    	text_layer_set_text(scal_layer, scale_text);
-  	} else {
-		text_layer_set_text_color(scal_layer, GColorIndigo);
-    	text_layer_set_text(scal_layer, "x 1.00");
-	}
-#endif
-}
-
 void update_pace() {
 #ifdef PBL_HEALTH
 	static char pace_text[32] = "00:00 (p)";
@@ -109,10 +90,13 @@ void update_pace() {
 	int curr_count, delta_count;
 	int pace;
 	
+  	APP_LOG(APP_LOG_LEVEL_INFO, "Update pace()");
 	curr_meters = meters;
 	curr_count = count;
 	delta_meters = curr_meters - prev_meters;
 	delta_count = curr_count - prev_count;
+	APP_LOG(APP_LOG_LEVEL_INFO, "Previous - %d, %d", prev_meters, prev_count);
+	APP_LOG(APP_LOG_LEVEL_INFO, "Current  - %d, %d", curr_meters, curr_count);
 	if (delta_meters > 1000) {
 		if (delta_count > 0) {
 			pace = (delta_count * 1000) / ((delta_meters * 1000) / 1000);
@@ -124,7 +108,7 @@ void update_pace() {
     		pace_text[4] = 48 + (pace % 10);
 			prev_meters = curr_meters;
 			prev_count = curr_count;
-			APP_LOG(APP_LOG_LEVEL_INFO, "Prev - %d, %d", prev_meters, prev_count);
+
 			text_layer_set_text_color(scal_layer, GColorBlack);
 			text_layer_set_text(scal_layer, pace_text);
 		}
@@ -153,6 +137,26 @@ void update_time(struct tm *t) {
 	if (hour_text[0] == '0') { hour_text[0] = ' '; }
 	if (t->tm_hour < 12) strcat(hour_text, "am"); else strcat(hour_text, "pm");
 	text_layer_set_text(time_layer, hour_text);
+}
+
+static void update_scale() {
+#ifdef PBL_HEALTH
+	static char scale_text[32];
+
+	if (persist_exists(SCALE)) {
+		char scale_factor[16];
+		
+    	persist_read_string(SCALE, scale_factor, sizeof(scale_factor));
+ 		APP_LOG(APP_LOG_LEVEL_INFO, "Read persistent scale_factor - %s", scale_factor);
+		scale = str_to_float(scale_factor);
+		strcpy(scale_text, "x "); strcat(scale_text, scale_factor);
+		text_layer_set_text_color(scal_layer, GColorIndigo);
+    	text_layer_set_text(scal_layer, scale_text);
+  	} else {
+		text_layer_set_text_color(scal_layer, GColorIndigo);
+    	text_layer_set_text(scal_layer, "x 1.00");
+	}
+#endif
 }
 
 void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
