@@ -86,6 +86,7 @@ void update_pace() {
 	static char pace_text[32] = "00:00 (p)";
 	static int prev_meters = 0;
 	static int prev_count = 0;
+	static bool even = 0;
 	int curr_meters, delta_meters;
 	int curr_count, delta_count;
 	int pace;
@@ -105,11 +106,14 @@ void update_pace() {
 			if (pace > 600) pace_text[0] = 48 + (pace / 600) % 6; 
     		pace_text[1] = 48 + (pace / 60) % 10;
     		pace_text[3] = 48 + (pace / 10) % 6;
-    		pace_text[4] = 48 + (pace % 10);
+    		pace_text[4] = 48 + (pace % 10);	
+			if (even == 0) pace_text[7] = 'p';
+			if (even == 1) pace_text[7] = 'P'; 
+			even = (even + 1) % 2;	
 			prev_meters = curr_meters;
 			prev_count = curr_count;
-
-			text_layer_set_text_color(scal_layer, GColorBlack);
+			
+			text_layer_set_text_color(scal_layer, GColorBlack); 
 			text_layer_set_text(scal_layer, pace_text);
 		}
 	}	
